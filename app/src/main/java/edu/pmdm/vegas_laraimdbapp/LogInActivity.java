@@ -109,6 +109,8 @@ public class LogInActivity extends AppCompatActivity {
                 intent.putExtra("photoUrl", photoUrl);
                 startActivity(intent);
                 finish();
+
+                Log.w(TAG, "USUARIO LOGEADO");
             }
         } catch (ApiException e) {
             // Error en el inicio de sesión
