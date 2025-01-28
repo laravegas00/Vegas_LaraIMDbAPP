@@ -86,6 +86,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         this.mlcl = listener; // Guardamos la referencia del listener para usarlo en el adaptador.
     }
 
+    public void removeMovie(Movie movie) {
+        movieList.remove(movie); // Eliminar la película de la lista
+    }
+
     @Override
     public int getItemCount() {
         return movieList.size();

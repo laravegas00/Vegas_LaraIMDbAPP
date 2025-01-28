@@ -20,6 +20,10 @@ public class Movie{
         this.releaseDate = releaseDate;
     }
 
+    public Movie() {
+
+    }
+
     public String getId() {
         return id;
     }

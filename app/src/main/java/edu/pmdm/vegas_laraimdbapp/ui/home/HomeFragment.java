@@ -1,11 +1,13 @@
 package edu.pmdm.vegas_laraimdbapp.ui.home;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,8 +23,10 @@ import edu.pmdm.vegas_laraimdbapp.R;
 import edu.pmdm.vegas_laraimdbapp.adapter.MovieAdapter;
 import edu.pmdm.vegas_laraimdbapp.api.ApiClient;
 import edu.pmdm.vegas_laraimdbapp.api.IMDBApiService;
+import edu.pmdm.vegas_laraimdbapp.database.FavoritesManager;
 import edu.pmdm.vegas_laraimdbapp.models.Movie;
 import edu.pmdm.vegas_laraimdbapp.models.MovieResponse;
+import edu.pmdm.vegas_laraimdbapp.ui.gallery.GalleryFragment;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -44,18 +48,19 @@ public class HomeFragment extends Fragment {
         recyclerView = root.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         movieAdapter = new MovieAdapter(getContext(), movieList, this::onMovieClick);
+        movieAdapter.setOnMovieLongClickListener(this::onMovieLongClick);
         recyclerView.setAdapter(movieAdapter);
 
         // Inicializa el servicio de la API
         apiService = ApiClient.getClient().create(IMDBApiService.class);
 
         // Carga las películas
-        loadMovies();
+        loadTop10Movies();
 
         return root;
     }
 
-    private void loadMovies() {
+    private void loadTop10Movies() {
         Call<MovieResponse> call = apiService.getTopMovies("ALL");
         call.enqueue(new Callback<MovieResponse>() {
             @Override
@@ -102,4 +107,21 @@ public class HomeFragment extends Fragment {
         intent.putExtra("plot", movie.getDescription());
         startActivity(intent);
     }
+
+    private void onMovieLongClick(Movie movie) {
+        // Obtener el ID del usuario desde las preferencias compartidas
+        String userId = requireContext().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+                .getString("userId", "default_user");
+
+        // Agregar película a favoritos usando FavoritesManager
+        FavoritesManager favoritesManager = FavoritesManager.getInstance(getContext());
+        if (favoritesManager.addFavorite(movie, userId)) {
+            Log.i("HomeFragment", "Película ya estaba en favoritos: " + movie.getTitle());
+            Toast.makeText(getContext(), "Película ya estaba en favoritos", Toast.LENGTH_SHORT).show();
+        } else {
+            Log.i("HomeFragment", "Película agregada a favoritos: " + movie.getTitle());
+            Toast.makeText(getContext(), "Película agregada a favoritos", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }
