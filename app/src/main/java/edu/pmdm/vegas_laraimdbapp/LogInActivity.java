@@ -24,6 +24,8 @@ import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 
+import java.util.UUID;
+
 public class LogInActivity extends AppCompatActivity {
 
     private GoogleSignInClient mGoogleSignInClient;
@@ -33,14 +35,20 @@ public class LogInActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
-        // Configurar ajustes de diseño para vistas con inserciones de sistema
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
-        // Configurar el inicio de sesión de Google
+
+        // Verificar si hay una cuenta de Google activa
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        if (account != null) {
+            // Si hay una cuenta activa, redirigir automáticamente a MainActivity
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.putExtra("name", account.getDisplayName());
+            intent.putExtra("email", account.getEmail());
+            intent.putExtra("userId", account.getId()); // Pasar el userId a MainActivity
+            startActivity(intent);
+            finish();
+        }
+
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .requestProfile()
@@ -48,8 +56,6 @@ public class LogInActivity extends AppCompatActivity {
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-
-        // Configurar el botón de inicio de sesión
         SignInButton signInButton = findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_STANDARD);
         setGoogleSignInButtonText(signInButton, "Sign in with Google");
@@ -59,14 +65,19 @@ public class LogInActivity extends AppCompatActivity {
         });
 
 
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
     }
 
-    // Cambia el texto del botón de inicio de sesión de Google
     private void setGoogleSignInButtonText(SignInButton signInButton, String buttonText) {
         for (int i = 0; i < signInButton.getChildCount(); i++) {
             View view = signInButton.getChildAt(i);
-            if (view instanceof TextView) { // Encuentra el TextView dentro del botón
-                ((TextView) view).setText(buttonText); // Cambia el texto
+            if (view instanceof TextView) {
+                ((TextView) view).setText(buttonText);
                 return;
             }
         }
@@ -85,24 +96,17 @@ public class LogInActivity extends AppCompatActivity {
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-
-            // Obtiene la cuenta del usuario
             if (account != null) {
-
-                // Obtener los datos del usuario
                 String name = account.getDisplayName();
                 String email = account.getEmail();
                 String photoUrl = (account.getPhotoUrl() != null) ? account.getPhotoUrl().toString() : null;
 
-                // Log para depuración
                 Log.d(TAG, "Name: " + name);
                 Log.d(TAG, "Email: " + email);
                 Log.d(TAG, "Photo URL: " + photoUrl);
 
-                //Guardar el correo en las preferencias del sistema
                 guardarCorreo(email);
 
-                // Pasar los datos al MainActivity
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.putExtra("name", name);
                 intent.putExtra("email", email);
@@ -113,18 +117,28 @@ public class LogInActivity extends AppCompatActivity {
                 Log.w(TAG, "USUARIO LOGEADO");
             }
         } catch (ApiException e) {
-            // Error en el inicio de sesión
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
         }
     }
 
-    public void guardarCorreo (String email) {
-        // Guarda el correo en SharedPreferences
+    public void guardarCorreo(String email) {
         SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("USER_EMAIL", email); // Almacena el correo
+
+        // Generar un userId único basado en el email
+        String userId = generateUserId(email);
+
+        // Guardar los datos actualizados en SharedPreferences
+        editor.putString("USER_EMAIL", email);
+        editor.putString("USER_ID", userId);
         editor.apply();
 
+        Log.d("LogInActivity", "Usuario guardado en SharedPreferences: " + email + " | ID: " + userId);
+    }
+
+    // Método para generar un ID único basado en el email
+    private String generateUserId(String email) {
+        return UUID.nameUUIDFromBytes(email.getBytes()).toString();
     }
 
 }

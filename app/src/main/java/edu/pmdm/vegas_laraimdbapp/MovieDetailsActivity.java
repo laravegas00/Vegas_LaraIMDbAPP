@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -101,6 +102,10 @@ public class MovieDetailsActivity extends AppCompatActivity {
                     if (movieTitle != null) {
                         String plot = movieTitle.getPlotText();
                         double rating = movieTitle.getRating();
+
+                        Log.d("MovieDetailsActivity", "Título: " + movieTitle.getTitleText());
+                        Log.d("MovieDetailsActivity", "Descripción: " + plot);
+                        Log.d("MovieDetailsActivity", "Puntuación: " + rating);
 
                         plotTextView.setText(plot != null ? plot : "Descripción no disponible");
                         ratingTextView.setText(String.format("Puntuación: %.1f", rating));

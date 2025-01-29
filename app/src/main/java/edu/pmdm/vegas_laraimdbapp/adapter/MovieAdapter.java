@@ -95,10 +95,12 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         return movieList.size();
     }
 
-    public void updateMovies(List<Movie> movies) {
-        this.movieList = movies != null ? movies : new ArrayList<>();
+    public void updateMovies(List<Movie> newMovies) {
+        movieList.clear();
+        movieList.addAll(newMovies);
         notifyDataSetChanged();
     }
+
 
     public static class MovieViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;

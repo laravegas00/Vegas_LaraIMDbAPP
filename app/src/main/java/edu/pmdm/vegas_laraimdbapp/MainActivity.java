@@ -1,14 +1,20 @@
 package edu.pmdm.vegas_laraimdbapp;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Menu;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -35,18 +41,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.appBarMain.toolbar);
-        binding.appBarMain.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null)
-                        .setAnchorView(R.id.fab).show();
-            }
-        });
+
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
+
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
                 .setOpenableLayout(drawer)
@@ -54,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
-
 
         // Obtener datos del intent
         Intent intent = getIntent();
@@ -74,24 +71,40 @@ public class MainActivity extends AppCompatActivity {
         if (photoUrl != null) {
             Glide.with(this).load(photoUrl).into(photoImageView);
         } else {
-            photoImageView.setImageResource(R.drawable.googlelogo); // Imagen predeterminada si no hay foto
+            photoImageView.setImageResource(R.drawable.googlelogo);
         }
 
+        // **Configurar el botón de logout**
         Button logoutButton = headerView.findViewById(R.id.nav_header_logout_button);
-        logoutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Cerrar sesión
-                FirebaseAuth.getInstance().signOut();
-                // Volver a la pantalla de inicio de sesión
-                Intent intent = new Intent(MainActivity.this, LogInActivity.class);
-                startActivity(intent);
-                finish();
-            }
+        logoutButton.setOnClickListener(v -> cerrarSesion());
+
+    }
+
+    private void cerrarSesion() {
+        // 1️⃣ Cerrar sesión de Google
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        googleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            // 2️⃣ Cerrar sesión de Firebase (si lo usas)
+            FirebaseAuth.getInstance().signOut();
+
+            // 3️⃣ Eliminar datos de SharedPreferences
+            SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.clear(); // Elimina todos los datos guardados
+            editor.apply();
+
+            // 4️⃣ Mostrar mensaje de cierre de sesión
+            Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show();
+
+            // 5️⃣ Redirigir al usuario a la pantalla de inicio de sesión
+            Intent intent = new Intent(this, LogInActivity.class);
+            startActivity(intent);
+            finish(); // Finalizar MainActivity
         });
-
-
-
     }
 
     @Override

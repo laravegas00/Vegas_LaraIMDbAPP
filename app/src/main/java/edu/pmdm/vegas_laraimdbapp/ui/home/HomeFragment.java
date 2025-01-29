@@ -2,6 +2,7 @@ package edu.pmdm.vegas_laraimdbapp.ui.home;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -109,19 +110,28 @@ public class HomeFragment extends Fragment {
     }
 
     private void onMovieLongClick(Movie movie) {
-        // Obtener el ID del usuario desde las preferencias compartidas
-        String userId = requireContext().getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
-                .getString("userId", "default_user");
+        // 🔹 Obtener el `userId` ACTUALIZADO de SharedPreferences
+        SharedPreferences prefs = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+        String userId = prefs.getString("USER_ID", null);
 
-        // Agregar película a favoritos usando FavoritesManager
+        Log.d("HomeFragment", "Descripción: " + movie.getDescription());
+
+        if (userId == null) {
+            Log.e("HomeFragment", "No se encontró un ID de usuario válido en SharedPreferences");
+            Toast.makeText(getContext(), "Error: No se ha encontrado un usuario válido", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         FavoritesManager favoritesManager = FavoritesManager.getInstance(getContext());
         if (favoritesManager.addFavorite(movie, userId)) {
-            Log.i("HomeFragment", "Película ya estaba en favoritos: " + movie.getTitle());
+            Log.i("HomeFragment", "Película ya estaba en favoritos para usuario: " + userId);
             Toast.makeText(getContext(), "Película ya estaba en favoritos", Toast.LENGTH_SHORT).show();
         } else {
-            Log.i("HomeFragment", "Película agregada a favoritos: " + movie.getTitle());
+            Log.i("HomeFragment", "Película agregada a favoritos para usuario: " + userId);
             Toast.makeText(getContext(), "Película agregada a favoritos", Toast.LENGTH_SHORT).show();
         }
     }
+
+
 
 }
