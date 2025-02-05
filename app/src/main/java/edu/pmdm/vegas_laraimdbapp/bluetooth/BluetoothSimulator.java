@@ -3,6 +3,7 @@ package edu.pmdm.vegas_laraimdbapp.bluetooth;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -79,27 +80,31 @@ public class BluetoothSimulator {
      */
     private void shareJsonViaBluetooth(List<Movie> favoriteMovies) {
         try {
-            Gson gson = new Gson(); // Crear una instancia de Gson
-            String jsonFavorites = gson.toJson(favoriteMovies); // Convertir la lista de películas a JSON
+            Gson gson = new Gson();
+            String jsonFavorites = gson.toJson(favoriteMovies);
 
-            // Crear un archivo JSON en el directorio de caché de la aplicación
+            // Guardar archivo en el directorio de caché
             File file = new File(context.getCacheDir(), "favorites.json");
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(jsonFavorites);
                 writer.flush();
             }
 
-            // Crear un Intent para compartir el archivo JSON a través de Bluetooth
+            // Obtener la URI del archivo a través de FileProvider
+            Uri fileUri = FileProvider.getUriForFile(
+                    context,
+                    context.getPackageName() + ".provider", // Asegurar que coincida con el manifest
+                    file
+            );
+
+            // Crear intent para compartir el archivo
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("application/json");
-            intent.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(
-                    context,
-                    context.getPackageName() + ".provider",
-                    file
-            ));
+            intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.setPackage("com.android.bluetooth");
 
-            // Iniciar la actividad de selección de aplicaciones para compartir
+            // Iniciar el intent
             context.startActivity(Intent.createChooser(intent, "Compartir favoritos"));
 
         } catch (IOException e) {
@@ -107,5 +112,6 @@ public class BluetoothSimulator {
             Toast.makeText(context, "Error al preparar los datos para compartir.", Toast.LENGTH_SHORT).show();
         }
     }
+
 
 }
