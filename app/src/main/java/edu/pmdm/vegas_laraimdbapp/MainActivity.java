@@ -74,12 +74,9 @@ public class MainActivity extends AppCompatActivity {
         nameTextView.setText(name);
         emailTextView.setText(email);
 
-        // Mostrar imagen del usuario
-        if (photoUrl != null) {
-            Glide.with(this).load(photoUrl).into(photoImageView);
-        } else {
-            photoImageView.setImageResource(R.drawable.googlelogo);
-        }
+        Glide.with(this)
+                .load(photoUrl != null ? photoUrl : "https://lh3.googleusercontent.com/a/default-user")
+                .into(photoImageView);
 
         // Configurar el botón de logout
         Button logoutButton = headerView.findViewById(R.id.nav_header_logout_button);

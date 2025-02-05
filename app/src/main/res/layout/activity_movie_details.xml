@@ -7,8 +7,9 @@
 
     <ImageView
         android:id="@+id/posterImageView"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_gravity="center"
+        android:layout_width="304dp"
+        android:layout_height="491dp"
         android:scaleType="centerCrop" />
 
     <TextView
