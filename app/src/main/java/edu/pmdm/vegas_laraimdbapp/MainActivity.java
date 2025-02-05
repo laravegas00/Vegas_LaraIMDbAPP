@@ -15,7 +15,6 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -28,8 +27,12 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import edu.pmdm.vegas_laraimdbapp.databinding.ActivityMainBinding;
 
+/**
+ * Actividad principal de la aplicación.
+ */
 public class MainActivity extends AppCompatActivity {
 
+    // Declaración de variables
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
 
@@ -40,11 +43,13 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        setSupportActionBar(binding.appBarMain.toolbar);
+        setSupportActionBar(binding.appBarMain.toolbar); // Configurar la Toolbar
 
+        // Configurar el Navigation Drawer
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
 
+        // Configurar la navegación
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
                 .setOpenableLayout(drawer)
@@ -65,42 +70,47 @@ public class MainActivity extends AppCompatActivity {
         TextView emailTextView = headerView.findViewById(R.id.nav_header_email);
         ImageView photoImageView = headerView.findViewById(R.id.nav_header_image);
 
+        // Mostrar datos del usuario en el encabezado
         nameTextView.setText(name);
         emailTextView.setText(email);
 
+        // Mostrar imagen del usuario
         if (photoUrl != null) {
             Glide.with(this).load(photoUrl).into(photoImageView);
         } else {
             photoImageView.setImageResource(R.drawable.googlelogo);
         }
 
-        // **Configurar el botón de logout**
+        // Configurar el botón de logout
         Button logoutButton = headerView.findViewById(R.id.nav_header_logout_button);
-        logoutButton.setOnClickListener(v -> cerrarSesion());
+        logoutButton.setOnClickListener(v -> cerrarSesion()); // Llamada al método de cierre de sesión
 
     }
 
+    /**
+     * Método para cerrar la sesión del usuario.
+     */
     private void cerrarSesion() {
-        // 1️⃣ Cerrar sesión de Google
+        // Cerrar sesión de Google
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
 
         googleSignInClient.signOut().addOnCompleteListener(this, task -> {
-            // 2️⃣ Cerrar sesión de Firebase (si lo usas)
+            // Cerrar sesión de Firebase (si lo usas)
             FirebaseAuth.getInstance().signOut();
 
-            // 3️⃣ Eliminar datos de SharedPreferences
+            // Eliminar datos de SharedPreferences
             SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.clear(); // Elimina todos los datos guardados
             editor.apply();
 
-            // 4️⃣ Mostrar mensaje de cierre de sesión
+            //Mostrar mensaje de cierre de sesión
             Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show();
 
-            // 5️⃣ Redirigir al usuario a la pantalla de inicio de sesión
+            // Redirigir al usuario a la pantalla de inicio de sesión
             Intent intent = new Intent(this, LogInActivity.class);
             startActivity(intent);
             finish(); // Finalizar MainActivity
@@ -109,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }

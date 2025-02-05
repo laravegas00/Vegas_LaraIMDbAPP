@@ -12,23 +12,43 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import edu.pmdm.vegas_laraimdbapp.R;
 import edu.pmdm.vegas_laraimdbapp.models.Movie;
 
+/**
+ * Adaptador para mostrar la lista de películas organizada.
+ */
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder> {
 
+    //Declarar las variables
     private List<Movie> movieList;
     private final Context context;
     private OnMovieLongClickListener mlcl;
     private final OnMovieClickListener mcl;
 
+    /**
+     * Constructor con clic.
+     * @param context Contexto de la aplicación.
+     * @param movieList Lista de películas.
+     * @param mcl Listener de clic.
+     */
     public MovieAdapter(Context context, List<Movie> movieList, OnMovieClickListener mcl) {
         this.context = context;
         this.movieList = movieList;
         this.mcl = mcl;
+    }
+
+    /**
+     * Constructor sin clic.
+     * @param context Contexto de la aplicación.
+     * @param movieList Lista de películas.
+     */
+    public MovieAdapter(Context context, List<Movie> movieList) {
+        this.context = context;
+        this.movieList = movieList;
+        this.mcl = null;  // No se maneja clic en esta versión
     }
 
     @NonNull
@@ -47,47 +67,47 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
         // Cargar la imagen de la película con Picasso
         String imageUrl = movie.getImage();
+
+        // Validar si hay una imagen
         if (imageUrl == null || imageUrl.isEmpty()) {
-            holder.imageView.setImageResource(R.drawable.googlelogo);
+            holder.imageView.setImageResource(R.drawable.error);
             Log.w("MOVIE", "No hay imagen para mostrar");
         } else {
             Picasso.get()
                     .load(imageUrl)
-                    //.placeholder(R.drawable.loading_image) // Imagen mientras carga
-                    //.error(R.drawable.googlelogo) // Imagen si falla la carga
                     .into(holder.imageView);
         }
 
-        // Manejar clics
-        holder.itemView.setOnClickListener(v -> {
-            if (mcl != null) {
-                mcl.onMovieClick(movie);
-            }
-        });
+        // Manejar clics (solo si el listener no es nulo)
+        if (mcl != null) {
+            holder.itemView.setOnClickListener(v -> mcl.onMovieClick(movie));
+        }
 
-        // Manejar clics largos
-        holder.itemView.setOnLongClickListener(v -> {
-            if (mlcl != null) {
+        // Manejar clics largos (solo si el listener no es nulo)
+        if (mlcl != null) {
+            holder.itemView.setOnLongClickListener(v -> {
                 mlcl.onMovieLongClick(movie);
-            }
-            return true;
-        });
+                return true;
+            });
+        }
     }
 
+    /**
+     * Interfaz para manejar clics en las películas.
+     */
     public interface OnMovieClickListener {
-        void onMovieClick(Movie movie); // Método para manejar clics simples
+        void onMovieClick(Movie movie);
     }
 
+    /**
+     * Interfaz para manejar clics largos en las películas.
+     */
     public interface OnMovieLongClickListener {
-        void onMovieLongClick(Movie movie); // Método que se ejecutará cuando se haga un clic largo en una película.
+        void onMovieLongClick(Movie movie);
     }
 
     public void setOnMovieLongClickListener(OnMovieLongClickListener listener) {
-        this.mlcl = listener; // Guardamos la referencia del listener para usarlo en el adaptador.
-    }
-
-    public void removeMovie(Movie movie) {
-        movieList.remove(movie); // Eliminar la película de la lista
+        this.mlcl = listener;
     }
 
     @Override
@@ -95,19 +115,25 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         return movieList.size();
     }
 
+    /**
+     * Actualizar la lista de películas.
+     * @param newMovies Nueva lista de películas.
+     */
     public void updateMovies(List<Movie> newMovies) {
         movieList.clear();
         movieList.addAll(newMovies);
         notifyDataSetChanged();
     }
 
-
+    /**
+     * ViewHolder para las películas.
+     */
     public static class MovieViewHolder extends RecyclerView.ViewHolder {
-        ImageView imageView;
+        ImageView imageView; // Declarar el ImageView
 
         public MovieViewHolder(@NonNull View itemView) {
             super(itemView);
-            imageView = itemView.findViewById(R.id.moviePoster);
+            imageView = itemView.findViewById(R.id.moviePoster); // Enlazar el ImageView con su ID
         }
     }
 }

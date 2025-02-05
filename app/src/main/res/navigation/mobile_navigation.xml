@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/nav_slideshow"
-        android:name="edu.pmdm.vegas_laraimdbapp.ui.slideshow.SlideshowFragment"
+        android:name="edu.pmdm.vegas_laraimdbapp.ui.slideshow.SearchFragment"
         android:label="@string/menu_slideshow"
         tools:layout="@layout/fragment_slideshow" />
 </navigation>

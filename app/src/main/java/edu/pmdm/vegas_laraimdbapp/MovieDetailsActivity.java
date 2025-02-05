@@ -9,7 +9,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -26,20 +25,26 @@ import com.squareup.picasso.Picasso;
 
 import android.Manifest;
 
-import edu.pmdm.vegas_laraimdbapp.api.ApiClient;
+import edu.pmdm.vegas_laraimdbapp.api.ApiClientIMDB;
 import edu.pmdm.vegas_laraimdbapp.api.IMDBApiService;
 import edu.pmdm.vegas_laraimdbapp.models.MovieOverviewResponse;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * Actividad para mostrar los detalles de una película.
+ */
 public class MovieDetailsActivity extends AppCompatActivity {
 
+    // Constantes para los permisos
     private static final int REQUEST_SMS_PERMISSION = 100;
     private static final int REQUEST_CONTACT_PERMISSION = 101;
 
+    // Variables para almacenar los detalles de la película
     private String movieDetails = "";
 
+    //Declarar las variables
     private TextView titleTextView;
     private TextView plotTextView;
     private TextView releaseDateTextView;
@@ -65,6 +70,9 @@ public class MovieDetailsActivity extends AppCompatActivity {
         String title = intent.getStringExtra("title");
         String imageUrl = intent.getStringExtra("imageUrl");
         String releaseDate = intent.getStringExtra("releaseDate");
+        String plot = intent.getStringExtra("plot");
+        double rating = intent.getDoubleExtra("rating", -1.0);
+        boolean TMDB = intent.getBooleanExtra("TMDB", false); // Recibir el valor de TMDB
 
         // Validaciones iniciales
         if (movieId == null || movieId.isEmpty()) {
@@ -73,44 +81,56 @@ public class MovieDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        // Mostrar detalles de la película
         titleTextView.setText(title != null ? title : "Título no disponible");
         releaseDateTextView.setText("Fecha de lanzamiento: " + (releaseDate != null ? releaseDate : "No disponible"));
 
+        // Mostrar imagen de la película
         if (imageUrl == null || imageUrl.isEmpty()) {
             Picasso.get().load(R.drawable.googlelogo).into(posterImageView);
         } else {
             Picasso.get().load(imageUrl).into(posterImageView);
         }
 
+        plotTextView.setText(plot != null ? plot : "Descripción no disponible");
+        ratingTextView.setText(String.format("Puntuación: %.1f", rating));
+
         // Llamada a la API para obtener los detalles
-        fetchMovieDetails(movieId);
+        if (!TMDB) {
+            fetchMovieDetails(movieId);
+        }
 
         // Configurar el botón para enviar SMS
         @SuppressLint({"MissingInflatedId", "LocalSuppress"})
         Button sendSmsButton = findViewById(R.id.btn_send_sms);
-        sendSmsButton.setOnClickListener(v -> checkContactPermission());
+        sendSmsButton.setOnClickListener(v -> checkContactPermission()); // Llamada al método de envío de SMS
+
     }
 
+    /**
+     * Método para obtener los detalles de una película a través de la API.
+     * @param movieId El ID de la película.
+     */
     private void fetchMovieDetails(String movieId) {
-        IMDBApiService apiService = ApiClient.getClient().create(IMDBApiService.class);
+
+        // Crear una instancia del servicio de la API
+        IMDBApiService apiService = ApiClientIMDB.getClient().create(IMDBApiService.class);
 
         apiService.getMovieDetails(movieId).enqueue(new Callback<MovieOverviewResponse>() {
             @Override
             public void onResponse(Call<MovieOverviewResponse> call, Response<MovieOverviewResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    MovieOverviewResponse.Title movieTitle = response.body().getData().getTitle();
-                    if (movieTitle != null) {
-                        String plot = movieTitle.getPlotText();
-                        double rating = movieTitle.getRating();
+                    MovieOverviewResponse.Title movieTitle = response.body().getData().getTitle(); // Obtener el título de la película
+                    if (movieTitle != null) { // Verificar si el título no es nulo
+                        String plot = movieTitle.getPlotText(); // Obtener la descripción de la película
+                        double rating = movieTitle.getRating(); // Obtener la puntuación de la película
 
-                        Log.d("MovieDetailsActivity", "Título: " + movieTitle.getTitleText());
-                        Log.d("MovieDetailsActivity", "Descripción: " + plot);
-                        Log.d("MovieDetailsActivity", "Puntuación: " + rating);
-
+                        // Actualizar las vistas con los detalles
                         plotTextView.setText(plot != null ? plot : "Descripción no disponible");
                         ratingTextView.setText(String.format("Puntuación: %.1f", rating));
 
-                        movieDetails = "¡No te pierdas esta película!\n" +
+                        // Construir el mensaje de detalles de la película para enviar SMS
+                        movieDetails = "¡NOVEDAD!\n¡No te pierdas esta película!\n" +
                                 "Título: " + movieTitle.getTitleText() + "\n" +
                                 "Descripción: " + (plot != null ? plot : "No disponible") + "\n" +
                                 "Fecha de lanzamiento: " + movieTitle.getReleaseDateString() + "\n" +
@@ -130,24 +150,34 @@ public class MovieDetailsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Método para verificar el permiso de lectura de contactos.
+     */
     private void checkContactPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) // Verificar el permiso
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
+            ActivityCompat.requestPermissions(this, // Solicitar el permiso
                     new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_CONTACT_PERMISSION);
         } else {
             pickContact();
         }
     }
 
+    /**
+     * Método para seleccionar un contacto.
+     */
     private void pickContact() {
-        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
-        pickContactLauncher.launch(intent);
+        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI); // Crear un intent para seleccionar un contacto
+        pickContactLauncher.launch(intent); // Iniciar la actividad para seleccionar un contacto
     }
 
+    /**
+     * Launcher para la actividad de selección de contacto.
+     */
     private final ActivityResultLauncher<Intent> pickContactLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {
+                        // Manejar el resultado de la actividad de selección de contacto
                         if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                             Uri contactUri = result.getData().getData();
                             String contactNumber = getContactNumber(contactUri);
@@ -157,15 +187,22 @@ public class MovieDetailsActivity extends AppCompatActivity {
                                 ActivityCompat.requestPermissions(this,
                                         new String[]{Manifest.permission.SEND_SMS}, REQUEST_SMS_PERMISSION);
                             } else {
-                                sendSMS(contactNumber, movieDetails);
+                                sendSMS(contactNumber, movieDetails); // Enviar SMS con los detalles de la película
                             }
                         } else {
                             showError("No se seleccionó ningún contacto.");
                         }
                     });
 
+    /**
+     * Método para obtener el número de contacto.
+     * @param contactUri La URI del contacto.
+     * @return El número de contacto.
+     */
     private String getContactNumber(Uri contactUri) {
-        String number = "";
+        String number = ""; // Inicializar la variable
+
+        // Realizar una consulta para obtener el número de contacto
         try (Cursor cursor = getContentResolver().query(contactUri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
                 int columnIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
@@ -177,14 +214,25 @@ public class MovieDetailsActivity extends AppCompatActivity {
         return number;
     }
 
+    /**
+     * Método para enviar un SMS.
+     * @param phoneNumber El número de teléfono del contacto.
+     * @param message El mensaje a enviar.
+     */
     private void sendSMS(String phoneNumber, String message) {
+
+        // Validar el número de teléfono
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             showError("Número de teléfono no válido.");
             return;
         }
+
+        // Construir el intent para enviar SMS
         Intent intent = new Intent(Intent.ACTION_SENDTO);
         intent.setData(Uri.parse("smsto:" + phoneNumber));
         intent.putExtra("sms_body", message);
+
+        // Iniciar la actividad para enviar SMS
         try {
             startActivity(intent);
         } catch (Exception e) {
@@ -192,14 +240,22 @@ public class MovieDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Método para mostrar un mensaje de error.
+     * @param message El mensaje de error.
+     */
     private void showError(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * Método para manejar la respuesta de los permisos.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
+        // Manejar la respuesta de los permisos según el código de solicitud
         if (requestCode == REQUEST_CONTACT_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             pickContact();
         } else if (requestCode == REQUEST_SMS_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

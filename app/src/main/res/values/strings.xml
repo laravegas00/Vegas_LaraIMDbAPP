@@ -9,10 +9,9 @@
 
     <string name="menu_home">Top 10</string>
     <string name="menu_gallery">Favorites</string>
-    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_slideshow">Buscar Película</string>
 
     <string name="sign_in_button">Sign in with Google</string>
-
 
 
 </resources>

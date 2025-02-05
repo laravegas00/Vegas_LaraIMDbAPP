@@ -1,29 +1,43 @@
 package edu.pmdm.vegas_laraimdbapp.models;
-import android.os.Parcel;
-import android.os.Parcelable;
 
+/**
+ * Clase que representa una película.
+ */
 public class Movie{
 
+    // Atributos de la película
     private String id;
     private String image;
     private String title;
-    private String description;
+    private String plot;
     private double rating;
     private String releaseDate;
 
-    public Movie(String id, String image, String title, String description, double rating, String releaseDate) {
+    /**
+     * Constructor de la clase
+     * @param id Identificador único de la película
+     * @param image URL de la imagen de la película
+     * @param title Título de la película
+     * @param plot Descripción de la pelicula
+     * @param rating Puntuación de la película
+     * @param releaseDate Fecha de estreno de la película
+     */
+    public Movie(String id, String image, String title, String plot, double rating, String releaseDate) {
         this.id = id;
         this.image = image;
         this.title = title;
-        this.description = description;
+        this.plot = plot;
         this.rating = rating;
         this.releaseDate = releaseDate;
     }
 
+    /**
+     * Constructor vacío de la clase
+     */
     public Movie() {
-
     }
 
+    // Métodos de acceso para los atributos (getters y setters)
     public String getId() {
         return id;
     }
@@ -36,8 +50,8 @@ public class Movie{
         return title;
     }
 
-    public String getDescription() {
-        return description;
+    public String getPlot() {
+        return plot;
     }
 
     public double getRating() {
@@ -60,8 +74,8 @@ public class Movie{
         this.title = title;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setPlot(String plot) {
+        this.plot = plot;
     }
 
     public void setRating(double rating) {
@@ -72,19 +86,26 @@ public class Movie{
         this.releaseDate = releaseDate;
     }
 
-
+    /**
+     * Método para comparar dos películas
+     * @param obj Objeto
+     * @return Devuelve si las peliculas son iguales
+     */
     @Override
     public boolean equals(Object obj) {
-        // Comparamos las películas basándonos en su ID
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Movie movie = (Movie) obj;
         return id.equals(movie.id);
     }
 
+    /**
+     * Método que genera un ID para la pelicula
+     * @return ID generado
+     */
     @Override
     public int hashCode() {
-        return id.hashCode(); // Genera un hash basado en el ID de la película
+        return id.hashCode();
     }
 
 }

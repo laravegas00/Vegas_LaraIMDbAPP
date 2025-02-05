@@ -15,7 +15,6 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,8 +28,12 @@ import edu.pmdm.vegas_laraimdbapp.bluetooth.BluetoothSimulator;
 import edu.pmdm.vegas_laraimdbapp.database.FavoritesManager;
 import edu.pmdm.vegas_laraimdbapp.models.Movie;
 
+/**
+ * Fragmento que muestra las películas favoritas del usuario.
+ */
 public class GalleryFragment extends Fragment {
 
+    // Declaración de variables
     private RecyclerView recyclerView;
     private MovieAdapter movieAdapter;
     private BluetoothAdapter bluetoothAdapter;
@@ -43,10 +46,10 @@ public class GalleryFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_gallery, container, false);
 
-        recyclerView = root.findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        recyclerView = root.findViewById(R.id.recyclerView); // Asignamos el RecyclerView
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2)); // Asignamos el LayoutManager en 2 columnas
 
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); // Obtener el adaptador Bluetooth
 
         // Inicializar el launcher para habilitar Bluetooth
         enableBluetoothLauncher = registerForActivityResult(
@@ -59,62 +62,65 @@ public class GalleryFragment extends Fragment {
                     }
                 }
         );
+
+        // Obtener el ID del usuario actual
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        userId = sharedPreferences.getString("USER_ID", "default_user"); // 🔹 Ahora usa el ID real en lugar del email
+        userId = sharedPreferences.getString("USER_ID", "default_user"); // Ahora usa el ID real en lugar del email
 
         Log.d("GalleryFragment", "Obtenido userId: " + userId);
 
-// **Cargar películas favoritas del usuario actual**
+        // Cargar películas favoritas del usuario actual
         favoritesManager = FavoritesManager.getInstance(getContext());
         favoriteMovies = favoritesManager.getFavoriteMovies(userId);
 
-        if (favoriteMovies == null || favoriteMovies.isEmpty()) {
-            Log.w("GalleryFragment", "No se encontraron películas favoritas para el usuario: " + userId);
-        } else {
-            for (Movie movie : favoriteMovies) {
-                Log.d("GalleryFragment", "Película favorita cargada: " + movie.getTitle());
-            }
-        }
+        movieAdapter = new MovieAdapter(getContext(), favoriteMovies, this::onMovieClick); // Asignamos el adaptador
+        movieAdapter.setOnMovieLongClickListener(this::onMovieLongClick); // Asignamos el listener para eliminar
+        recyclerView.setAdapter(movieAdapter); // Asignamos el adaptador al RecyclerView
+        movieAdapter.notifyDataSetChanged(); // Asegurar que la UI se actualiza
 
-// **Actualizar el RecyclerView**
-        movieAdapter = new MovieAdapter(getContext(), favoriteMovies, this::onMovieClick);
-        movieAdapter.setOnMovieLongClickListener(this::onMovieLongClick);
-        recyclerView.setAdapter(movieAdapter);
-        movieAdapter.notifyDataSetChanged(); // 🔹 Asegurar que la UI se actualiza
-
-        // **Botón para compartir**
+        // Botón para compartir
         Button shareButton = root.findViewById(R.id.btnShare);
-        shareButton.setOnClickListener(v -> checkBluetoothAndShare(favoriteMovies));
+        shareButton.setOnClickListener(v -> checkBluetoothAndShare(favoriteMovies)); // Llamamos al método para compartir
 
-        return root;
+        return root; // Devolvemos la vista
     }
 
+    /**
+     * Método que se llama cuando el fragmento se reanuda.
+     */
     @Override
     public void onResume() {
         super.onResume();
-        Log.d("GalleryFragment", "Fragmento Gallery resumido, actualizando lista de favoritos.");
-        // **Recargar la lista cuando el fragmento se reanuda**
-        favoriteMovies = favoritesManager.getFavoriteMovies(userId);
-        movieAdapter.updateMovies(favoriteMovies);
+        favoriteMovies = favoritesManager.getFavoriteMovies(userId); // Actualizar las películas favoritas
+        movieAdapter.updateMovies(favoriteMovies); // Actualizar el adaptador con las películas favoritas
     }
 
+    /**
+     * Método que se llama cuando se hace clic en una película.
+     * @param movie Película seleccionada.
+     */
     private void onMovieClick(Movie movie) {
+        // Navegar a la actividad de detalles de la película
         Intent intent = new Intent(getContext(), MovieDetailsActivity.class);
         intent.putExtra("id", movie.getId());
         intent.putExtra("title", movie.getTitle());
         intent.putExtra("imageUrl", movie.getImage());
         intent.putExtra("releaseDate", movie.getReleaseDate());
-        intent.putExtra("plot", movie.getDescription());
+        intent.putExtra("plot", movie.getPlot());
         startActivity(intent);
     }
 
+    /**
+     * Método que se llama cuando se hace un clic largo en una película.
+     * @param movie Película seleccionada.
+     */
     private void onMovieLongClick(Movie movie) {
         // Eliminar la película de la base de datos
         favoritesManager.removeFavorite(movie, userId);
 
         // Eliminar la película de la lista del adaptador
         List<Movie> updatedFavorites = favoritesManager.getFavoriteMovies(userId);
-        movieAdapter.updateMovies(updatedFavorites); // 🔹 Método para actualizar el adaptador
+        movieAdapter.updateMovies(updatedFavorites); // Actualizar el adaptador con las películas favoritas
 
         // Notificar al RecyclerView que los datos cambiaron
         movieAdapter.notifyDataSetChanged();
@@ -123,17 +129,25 @@ public class GalleryFragment extends Fragment {
     }
 
 
+    /**
+     * Método que comprueba si el dispositivo tiene Bluetooth y si está habilitado.
+     * @param favoriteMovies Lista de películas favoritas.
+     */
     private void checkBluetoothAndShare(List<Movie> favoriteMovies) {
+
+        // Comprobamos si hay películas favoritas
         if (favoriteMovies.isEmpty()) {
             Toast.makeText(getContext(), "No hay películas favoritas para compartir.", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Comprobamos si el dispositivo tiene Bluetooth
         if (bluetoothAdapter == null) {
             Toast.makeText(getContext(), "Este dispositivo no soporta Bluetooth.", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Comprobamos si el Bluetooth está habilitado
         if (!bluetoothAdapter.isEnabled()) {
             Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             enableBluetoothLauncher.launch(enableBluetoothIntent);
