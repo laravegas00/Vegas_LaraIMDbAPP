@@ -40,6 +40,7 @@ import edu.pmdm.vegas_laraimdbapp.models.Movie;
  */
 public class GalleryFragment extends Fragment {
 
+    //Declarar variables
     private RecyclerView recyclerView;
     private MovieAdapter movieAdapter;
     private BluetoothAdapter bluetoothAdapter;
@@ -112,6 +113,10 @@ public class GalleryFragment extends Fragment {
         movieAdapter.updateMovies(favoriteMovies);
     }
 
+    /**
+     * Maneja el clic en una película.
+     * @param movie Película seleccionada.
+     */
     private void onMovieClick(Movie movie) {
         Intent intent = new Intent(getContext(), MovieDetailsActivity.class);
         intent.putExtra("id", movie.getId());
@@ -122,6 +127,10 @@ public class GalleryFragment extends Fragment {
         startActivity(intent);
     }
 
+    /**
+     * Maneja el clic largo en una película.
+     * @param movie Película seleccionada.
+     */
     private void onMovieLongClick(Movie movie) {
         favoritesManager.removeFavorite(movie, userId);
         movieAdapter.updateMovies(favoritesManager.getFavoriteMovies(userId));
@@ -153,7 +162,7 @@ public class GalleryFragment extends Fragment {
     }
 
     /**
-     * Solicita permisos de Bluetooth en Android 12+.
+     * Solicita permisos de Bluetooth
      */
     private void requestBluetoothPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
